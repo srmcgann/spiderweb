@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body,html{
+        background:#000;
+        margin:0;
+        height:100vh;
+      }
+      #pointAnimationDiv{
+        width:100%;
+      }
+      .pointCanvas{
+        width:100%;
+        height:100vh;
+      }
+      canvas{
+        display:block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas class="pointCanvas" id="pointAnimation"></canvas>
+    <script>
+      function init(){
+        threshold=260;
+        v=[];
+        v.push({});
+        v[0].c = document.querySelector("#pointAnimation");
+        v[0].c.className = "pointCanvas";
+        v[0].x = v[0].c.getContext("2d");
+        v[0].c.style.height="100vh";
+        v[0].c.width = v[0].c.clientWidth;
+        v[0].c.height = v[0].c.clientHeight;
+        v[0].c.style.height="100vh";
+        var cx=v[0].c.width/2, cy=v[0].c.height/2;
+        var vx,vy;
+        v[0].f=v[0].t=0;
+        v[0].p=[];
+        for(var i=0;i<110;++i){
+          vx=0;//-.9+rand(i+1e3)*1.8;
+          vy=0;//-.9+rand(i+2e3)*1.8;
+          var p=Math.PI*2/24*(Math.random()*24|0)
+          var d=Math.random()*cx*.75
+          var X=cx+Math.sin(p)*d
+          var Y=cy+Math.cos(p)*d
+          v[0].p.push({x:X,y:Y,vx,vy})
+        }
+
+        v.push({});
+        window.addEventListener("resize", function resize(){
+          init();
+          v[0].c.style.height="100vh";
+          v[0].c.width = v[0].c.clientWidth;
+          v[0].c.height = v[0].c.clientHeight;
+        }, true);
+      }
+      
+      function drawPointAnimation(){
+        
+        var c=v[0].c;
+        var x=v[0].x;
+        x.globalAlpha=.5+Math.sin(frame/30)/3;
+        x.fillStyle="#000";
+        x.fillRect(0,0,c.width,c.height);
+        x.globalAlpha=1;
+
+        var cx=c.width/2, cy=c.height/2;
+        var X1,Y1,X2,Y2;
+        v[0].f+=.7;
+
+        var d;
+        for(var i=0;i<v[0].p.length;++i){
+          var p=Math.atan2(cx-v[0].p[i].x,cy-v[0].p[i].y);
+          v[0].p[i].x-=Math.sin(p)*4;
+          v[0].p[i].y-=Math.cos(p)*4;
+          if(v[0].p[i].x<-100 || v[0].p[i].x > cx*2+100 || v[0].p[i].y<-100 || v[0].p[i].y>cy*2+100){
+            var p=Math.PI*2/24*(Math.random()*24|0)
+            v[0].p[i].x=cx+Math.sin(p)
+            v[0].p[i].y=cy+Math.cos(p)
+          }
+          v[0].p[i].x+=v[0].p[i].vx;
+          v[0].p[i].y+=v[0].p[i].vy;
+          x1=v[0].p[i].x;
+          y1=v[0].p[i].y;
+          for(var j=0;j<v[0].p.length;++j){
+            if(i!=j){
+              x2=v[0].p[j].x;
+              y2=v[0].p[j].y;
+              d=Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+              if(d<threshold){
+                x.beginPath();
+                x.moveTo(x1,y1);
+                x.lineTo(x2,y2);
+                x.lineWidth=1+10/(1+d/10);
+                var alpha=(1 - Math.pow(d / threshold, .85))/(1/Math.hypot(cx-v[0].p[i].x,cy-v[0].p[i].y)*500)
+                x.strokeStyle=`hsla(177,100%,60%,${alpha})`;
+                x.stroke();
+              }
+            }
+          }
+        }
+        x.lineWidth=1;
+        
+        x.globalAlpha=1;
+        for(var i=0;i<v[0].p.length;++i){
+          x.beginPath();
+          x.arc(v[0].p[i].x,v[0].p[i].y,6,0,Math.PI*2);
+          alpha=1/(1/Math.hypot(cx-v[0].p[i].x,cy-v[0].p[i].y)*500)
+          x.fillStyle=`hsla(177,100%,60%,${alpha})`;
+          x.fill();
+          x.beginPath();
+          x.arc(v[0].p[i].x,v[0].p[i].y,3,0,Math.PI*2);
+          x.fillStyle=`hsla(0,00%,100%,${alpha})`;
+          x.fill();
+        }
+        x.filter = 'none';
+        
+        if(v[0].f>60){
+          v[0].f=0;
+          v[0].t++;
+        }
+        frame++;
+        v[0].raf=requestAnimationFrame(()=>{drawPointAnimation(v)});
+      }
+
+      function rand(s){
+        return parseFloat('0.'+Math.sin(s+3e4).toString().substr(6));
+      }
+      frame=0;
+      window.onload=function(){
+        init();
+        drawPointAnimation();
+      };
+    </script>
+  </body>
+</html>
